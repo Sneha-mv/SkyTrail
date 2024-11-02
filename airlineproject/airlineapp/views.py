@@ -34,29 +34,25 @@ def flight_detail(request, flight_id):
     return render(request, 'flight_detail.html', {'flight': flight, 'seats': seats})
 
 
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Flight, Seat, Passenger, Reservation
-from django.contrib import messages
-
 def book_ticket(request, flight_id):
     flight = get_object_or_404(Flight, id=flight_id)
-    
     if request.method == 'POST':
         first_name = request.POST['first_name']
         last_name = request.POST['last_name']
         email = request.POST['email']
         phone_number = request.POST['phone_number']
-        selected_seats = request.POST.getlist('seat_numbers')  # Get list of selected seat numbers
+        selected_seats = request.POST.getlist('seat_numbers')
 
-        # Check availability of all selected seats
-        unavailable_seats = []
-        for seat_number in selected_seats:
-            seat = Seat.objects.filter(flight=flight, seat_number=seat_number, is_available=True).first()
-            if not seat:
-                unavailable_seats.append(seat_number)
+        if len(phone_number) != 10 or not phone_number.isdigit():
+            messages.error(request, "Please enter a valid 10-digit phone number.")
+            return redirect('airlineapp:book_ticket', flight_id=flight.id)
 
-        if unavailable_seats:
-            messages.error(request, f"The following seats are already booked: {', '.join(unavailable_seats)}.")
+        existing_passenger = Passenger.objects.filter(email=email).first()
+        if existing_passenger:
+            if existing_passenger.first_name == first_name and existing_passenger.last_name == last_name:
+                messages.error(request, "This email is already registered with your name.")
+                return redirect('airlineapp:book_ticket', flight_id=flight.id) 
+            passenger = existing_passenger 
         else:
             passenger = Passenger.objects.create(
                 first_name=first_name,
@@ -65,23 +61,29 @@ def book_ticket(request, flight_id):
                 phone_number=phone_number
             )
 
+        # Check availability of all selected seats
+        unavailable_seats = []
+        for seat_number in selected_seats:
+            seat = Seat.objects.filter(flight=flight, seat_number=seat_number, is_available=True).first()
+            if not seat:
+                unavailable_seats.append(seat_number)
+        if unavailable_seats:
+            messages.error(request, f"The following seats are already booked: {', '.join(unavailable_seats)}")
+        else:
             for seat_number in selected_seats:
                 seat = Seat.objects.get(flight=flight, seat_number=seat_number)
                 seat.is_available = False
                 seat.save()
-                
-                reservation = Reservation.objects.create(
+
+                Reservation.objects.create(
                     flight=flight,
-                    passenger=passenger,
+                    passenger=passenger,  # Use the passenger instance
                     seat_number=seat_number
                 )
-
-            messages.success(request, "Tickets booked successfully!")
             return redirect('airlineapp:index')
-
-    # Get available seats for the flight
     available_seats = Seat.objects.filter(flight=flight, is_available=True)
     return render(request, 'book_ticket.html', {'flight': flight, 'available_seats': available_seats})
+
 
 
 

@@ -22,9 +22,9 @@ class Seat(models.Model):
     is_available = models.BooleanField(default=True)
 
     def clean(self):
-        # Check for duplicates within the same flight
-        if Seat.objects.filter(flight=self.flight, seat_number=self.seat_number).exists():
-            raise ValidationError(f"Seat number {self.seat_number} already exists for this flight.")
+        # Check for seat number uniqueness for the flight
+        if Reservation.objects.filter(flight=self.flight, seat_number=self.seat_number).exists():
+            raise ValidationError(f'Seat number {self.seat_number} already exists for this flight.')
 
     def save(self, *args, **kwargs):
         self.clean()  # Call clean to ensure validation

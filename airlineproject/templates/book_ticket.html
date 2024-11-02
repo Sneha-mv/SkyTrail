@@ -4,47 +4,81 @@
     Book Ticket
 {% endblock %}
 {% block content %}
-<h2 class="my_title" style="margin-top: 50px;">Book Ticket for {{ flight.airline_name }} - Flight {{ flight.flight_number }}</h2>
-{% if messages %}
-    {% for message in messages %}
-        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
-            {{ message }}
+<style>
+   .reg-form {
+        background-image: url("{% static 'img/book_ticket.jpg' %}");
+        background-size: cover;
+        background-position: center;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        color: white; /* Change text color to improve readability */
+   }
+</style>
+
+<div class="book-sec1">
+    <div class="book-sec2">
+        <div class="reg-form">
+            <h2 class="my_title" style="font-size: 26px;color:#5b0618;">Book Ticket for {{ flight.airline_name }} - Flight {{ flight.flight_number }}</h2>
+            <p style="font-size: 17px;color:#890723;">Please enter your details.</p>
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <input type="text" name="first_name" id="first_name" placeholder="First Name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <input type="text" name="last_name" id="last_name" placeholder="Last Name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <input type="email" name="email" id="email" placeholder="Email" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <input type="text" name="phone_number" id="phone_number" placeholder="Phone Number" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <input type="text" id="selected_seats" placeholder="Select Seats" readonly class="form-control">
+                </div>
+                <div class="seat-selection" style="display: grid; grid-template-columns: repeat(15, 1fr); gap: 5px;">
+                    {% for seat in available_seats %}
+                        <label style="display: flex; align-items: center;color: black;">
+                            <input type="checkbox" class="seat-checkbox" name="seat_numbers" value="{{ seat.seat_number }}" style="margin-right: 5px;">
+                            {{ seat.seat_number }}
+                        </label>
+                    {% endfor %}
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top: 35px;width: 150px;height: 50px;margin-left: 293px;">Book Tickets</button>
+            </form>
         </div>
-    {% endfor %}
-{% endif %}
-
-<div class="container">
-<form method="post">
-    {% csrf_token %}
-    <div class="form-group">
-        <label for="first_name">First Name:</label>
-        <input type="text" name="first_name" id="first_name" class="form-control" required>
     </div>
-    <div class="form-group">
-        <label for="last_name">Last Name:</label>
-        <input type="text" name="last_name" id="last_name" class="form-control" required>
-    </div>
-    <div class="form-group">
-        <label for="email">Email:</label>
-        <input type="email" name="email" id="email" class="form-control" required>
-    </div>
-    <div class="form-group">
-        <label for="phone_number">Phone Number:</label>
-        <input type="text" name="phone_number" id="phone_number" class="form-control" required>
-    </div>
-    
-    <h3>Select Seats:</h3>
-    <div class="seat-selection">
-        {% for seat in available_seats %}
-            <label>
-                <input type="checkbox" name="seat_numbers" value="{{ seat.seat_number }}">
-                {{ seat.seat_number }}
-            </label><br>
-        {% endfor %}
-    </div>
-
-    <button type="submit" class="btn btn-primary">Book Tickets</button>
-</form>
 </div>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const seatCheckboxes = document.querySelectorAll('.seat-checkbox');
+        const selectedSeatsInput = document.getElementById('selected_seats');
+
+        // Function to update selected seats input
+        function updateSelectedSeats() {
+            const selectedSeats = Array.from(seatCheckboxes)
+                .filter(checkbox => checkbox.checked)
+                .map(checkbox => checkbox.value)
+                .join(', ');
+            selectedSeatsInput.value = selectedSeats;
+        }
+
+        // Add event listener to each checkbox
+        seatCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateSelectedSeats);
+        });
+    });
+</script>
 {% endblock %}
+
+
