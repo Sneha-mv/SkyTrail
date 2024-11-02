@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Ticket Confirmation</h2>
+
+<div class="ticket-details">
+    <p><strong>Passenger Name:</strong> {{ reservation.passenger.first_name }} {{ reservation.passenger.last_name }}</p>
+    <p><strong>Email:</strong> {{ reservation.passenger.email }}</p>
+    <p><strong>Phone Number:</strong> {{ reservation.passenger.phone_number }}</p>
+    <p><strong>Flight:</strong> {{ reservation.flight.airline_name }} - Flight {{ reservation.flight.flight_number }}</p>
+    <p><strong>Departure:</strong> {{ reservation.flight.departure_city }} at {{ reservation.flight.departure_time|date:"d M Y, H:i" }}</p>
+    <p><strong>Arrival:</strong> {{ reservation.flight.arrival_city }}</p>
+    <p><strong>Seat Number:</strong> {{ reservation.seat_number }}</p>
+</div>
+
+<a href="{% url 'airlineapp:index' %}" class="btn btn-success">Back to Home</a>
+<a href="{% url 'airlineapp:cancel_ticket' reservation.id %}" class="btn btn-danger">Cancel Ticket</a>
+{% endblock %}

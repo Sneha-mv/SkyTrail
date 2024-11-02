@@ -1,0 +1,103 @@
+
+
+
+
+
+<!-- flight_detail.html -->
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="flight-info">
+    <h2>Flight: {{ flight.airline_name }} - {{ flight.flight_number }}</h2>
+    <p>Departure: {{ flight.departure_city }} | Arrival: {{ flight.arrival_city }}</p>
+    <p>Departure Time: {{ flight.departure_time|date:"d M Y, H:i" }}</p>
+    <p>Price: ${{ flight.price }}</p>
+</div>
+
+<div class="seat-grid">
+    {% for seat in seats %}
+        <div class="seat {% if seat.is_available %}available{% else %}booked{% endif %}" 
+             data-seat-number="{{ seat.seat_number }}">
+            {{ seat.seat_number }}
+        </div>
+    {% endfor %}
+</div>
+
+<div class="seat-status">
+    <p>Available: <span class="available">[G]</span> | Booked: <span class="booked">[B]</span> | Unavailable: <span class="unavailable">[R]</span></p>
+</div>
+
+<div id="info-panel">
+    <h3>Selected Seats:</h3>
+    <ul id="selected-seats"></ul>
+    <p>Total Price: $<span id="total-price">0.00</span></p>
+    <button class="btn btn-success">Proceed to Payment</button>
+</div>
+
+<style>
+    .seat-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 10px;
+        margin: 20px 0;
+    }
+    .seat {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 5px;
+        font-weight: bold;
+        color: #fff;
+        cursor: pointer;
+    }
+    .available {
+        background-color: #4CAF50; /* Green for available seats */
+    }
+    .booked {
+        background-color: #D32F2F; /* Red for booked seats */
+        cursor: not-allowed;
+        text-decoration: line-through;
+    }
+    .selected {
+        background-color: #FFC107; /* Yellow for selected seats */
+    }
+    #info-panel {
+        margin-top: 20px;
+        padding: 10px;
+        border: 1px solid #ccc;
+    }
+</style>
+
+<script>
+    const seats = document.querySelectorAll('.seat');
+    const selectedSeats = document.getElementById('selected-seats');
+    const totalPriceElement = document.getElementById('total-price');
+    const pricePerSeat = parseFloat("{{ flight.price|floatformat:2 }}");
+
+    seats.forEach(seat => {
+        seat.addEventListener('click', function() {
+            if (seat.classList.contains('available')) {
+                seat.classList.toggle('selected'); // Toggle seat selection
+                updateSelectedSeats();
+            }
+        });
+    });
+
+    function updateSelectedSeats() {
+        selectedSeats.innerHTML = ''; // Clear the list
+        let total = 0;
+        seats.forEach(seat => {
+            if (seat.classList.contains('selected')) {
+                const seatNumber = seat.getAttribute('data-seat-number');
+                selectedSeats.innerHTML += `<li>${seatNumber}</li>`;
+                total += pricePerSeat;
+            }
+        });
+        totalPriceElement.innerText = total.toFixed(2); // Update total price
+    }
+</script>
+
+{% endblock %}
+

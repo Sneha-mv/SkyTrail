@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %} 
+    Sign In
+{% endblock %}
+{% block content %}
+<style>
+    .reg-image {
+        flex: 1; 
+        background: url("{% static 'img/skylogin.avif' %}") no-repeat center center;
+        background-size: cover;
+    }
+    .error-box {
+        background-color: #f8d7da;
+        color: #721c24;
+        border-left: 4px solid #f5c6cb;
+        padding: 8px;
+        margin-top: 5px;
+        font-size: 14px;
+        border-radius: 3px;
+        display: none; 
+    }
+    .error-box.show {
+        display: block; /* Show when 'show' class is added */
+    }
+    .error-box i {
+        margin-right: 5px;
+        color: #721c24;
+    }
+</style>
+
+<div class="log-sec1">
+    <div class="log-sec2">
+        <div class="reg-form">
+            {% if messages %}
+                <div>
+                    {% for message in messages %}
+                    <div class="log-alert">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <h2 style="margin-top: 15px;">Log In</h2>
+            <p>Welcome back! Please log in to your account.</p>
+            <form action="#" method="POST" id="registration-form">
+                {% csrf_token %}
+                <div>
+                    <input type="email" name="email" placeholder="Email" id="email" required>
+                    <div class="error-box {% if errors.email_error %}show{% endif %}" id="email-error">
+                        <i class="fa fa-exclamation-circle"></i>
+                         {{ errors.email_error }}
+                    </div>
+                </div>
+                <div>
+                    <input type="password" name="password" placeholder="Password" id="password" required>
+                    <div class="error-box {% if errors.password_error %}show{% endif %}" id="password-length-error">
+                        <i class="fa fa-exclamation-circle"></i>
+                         {{ errors.password_error }}
+                    </div>
+                </div>
+                <div class="forgot-password" style="margin-top: 25px;margin-left: 135px;">
+                    <a href="{% url 'airlineapp:change_password' %}" style="text-decoration: none;color: black;">Forgot your password?</a>
+                </div>
+                <button type="submit">Sign In</button>
+            </form>
+        </div>
+        <div class="reg-image"></div> 
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const emailError = "{{ errors.email_error|default:'' }}";
+        const passwordError = "{{ errors.password_error|default:'' }}";
+
+        if (emailError) {
+            const emailErrorBox = document.getElementById('email-error');
+            emailErrorBox.classList.add('show');
+        }
+
+        if (passwordError) {
+            const passwordErrorBox = document.getElementById('password-length-error');
+            passwordErrorBox.classList.add('show');
+        }
+    });
+</script>
+{% endblock %}
+
+

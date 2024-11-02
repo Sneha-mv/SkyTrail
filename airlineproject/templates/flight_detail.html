@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+    Flight Details
+{% endblock %}
+{% block content %}
+<div class="container mt-4" style="height: 600px;">
+    <div class="card" style="margin-top: 40px;">
+        <div class="card-header text-center">
+            <h2 class="my_title">{{ flight.airline_name }} - Flight {{ flight.flight_number }}</h2>
+        </div>
+        <div class="card-body">
+            <div class="detail-sec1">
+                <p><strong>From :</strong>&nbsp; {{ flight.departure_city }}</p>
+                <p><strong>To :</strong>&nbsp; {{ flight.arrival_city }}</p>
+                <p><strong>Departure :</strong>&nbsp; {{ flight.departure_time|date:"d M Y, H:i" }}</p>
+                <p><strong>Price :</strong>&nbsp; ${{ flight.price|floatformat:2 }}</p>
+                <p><strong>Available Seats :</strong></p>
+            </div>
+            <div class="seat-grid">
+                {% for seat in seats %}
+                    <div class="seat {% if seat.is_available %}available{% else %}booked{% endif %}">
+                        {{ seat.seat_number }}
+                    </div>
+                    {% if forloop.counter|divisibleby:15 %}
+                        <div style="grid-column: span 15;"></div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            <div class="seat-status">
+                <p>Available : <span class="available">[G]</span>&nbsp;&nbsp;&nbsp; | Booked : <span class="booked">[B]</span></p>
+            </div>
+        </div>
+        <div class="card-footer text-center">
+            <a href="{% url 'airlineapp:book_ticket' flight.id %}" class="btn detail-sec2">Book Ticket</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

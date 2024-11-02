@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %} 
+    Sign Up
+{% endblock %}
+{% block content %}
+<style>
+    .reg-image {
+        flex: 1;
+        background: url("{% static 'img/skyregister.jpg' %}") no-repeat center center;
+        background-size: cover;
+    }
+    .error-box {
+        display: none;
+        background-color: #f8d7da;
+        color: #721c24;
+        border-left: 4px solid #f5c6cb;
+        padding: 8px;
+        margin-top: 5px;
+        font-size: 14px;
+        border-radius: 3px;
+    }
+    .error-box i {
+        margin-right: 5px;
+        color: #721c24;
+    }
+</style>
+
+<div class="reg-sec1">
+    <div class="reg-sec2">
+        <div class="reg-image"></div>
+        <div class="reg-form">
+            <h2>Create Account</h2>
+            <p>Don't have an account? Register now and join us!</p>
+            <form action="#" method="POST" id="registration-form">
+                {% csrf_token %}
+                <div>
+                    <input type="text" name="username" placeholder="Username" id="username" required>
+                    <div class="error-box" id="username-error">
+                        <i class="fa fa-exclamation-circle"></i>
+                        Username already exists. Please choose another one.
+                    </div>
+                </div>
+                <div>
+                    <input type="email" name="email" placeholder="Email" id="email" required>
+                    <div class="error-box" id="email-error">
+                        <i class="fa fa-exclamation-circle"></i>
+                        Email already registered. Please use another email.
+                    </div>
+                </div>
+                <div>
+                    <input type="password" name="password" placeholder="Password" id="password" required oninput="checkPasswordMatch();">
+                    <div class="error-box" id="password-length-error">
+                        <i class="fa fa-exclamation-circle"></i>
+                        Password must be at least 8 characters long.
+                    </div>
+                </div>
+                <div>
+                    <input type="password" name="cpassword" id="cpassword"  placeholder="Confirm Password" required oninput="checkPasswordMatch();">
+                    <div class="error-box" id="password-error">
+                        <i class="fa fa-exclamation-circle"></i>
+                        Passwords do not match.
+                    </div>
+                </div>
+                <button type="submit">Sign Up</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Show username error if it exists from backend validation
+    const usernameError = "{{ username_error }}";
+    if (usernameError) {
+        const errorMessage = document.getElementById('username-error');
+        errorMessage.style.display = 'block';
+    }
+
+    // Show email error if it exists from backend validation
+    const emailError = "{{ email_error }}";
+    if (emailError) {
+        const errorMessage = document.getElementById('email-error');
+        errorMessage.style.display = 'block';
+    }
+
+    // Show password length error if it exists from backend validation
+    const passwordLengthError = "{{ password_length_error }}";
+    if (passwordLengthError) {
+        const errorMessage = document.getElementById('password-length-error');
+        errorMessage.style.display = 'block';
+    }
+
+    // Show password mismatch error if it exists from backend validation
+    const passwordMismatch = "{{ password_mismatch }}";
+    if (passwordMismatch) {
+        const errorMessage = document.getElementById('password-error');
+        errorMessage.style.display = 'block';
+    }   
+</script>
+{% endblock %}
+
+
