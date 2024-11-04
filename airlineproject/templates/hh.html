@@ -1,103 +1,143 @@
+def cancel_booking(request, reservation_id):
+    # Retrieve the reservation by ID
+    reservation = get_object_or_404(Reservation, id=reservation_id)
+
+    if reservation.is_cancelled:
+        messages.error(request, "This booking is already canceled.")
+        return redirect('airlineapp:print_ticket')
+
+    # Cancel the booking
+    reservation.is_cancelled = True
+    reservation.seats.clear()  # This will remove all associated seats
+
+    # Save the updated reservation
+    reservation.save()
+
+    messages.success(
+        request, 
+        f"Booking for Flight {reservation.flight.flight_number} is cancelled successfully. Thank you for using our services!  "
+        
+
+    )
+    return redirect('airlineapp:print_ticket', reservation_id=reservation_id)
+
+
+
+    class Reservation(models.Model):
+    flight = models.ForeignKey(Flight, on_delete=models.CASCADE)
+    passenger = models.ForeignKey(Passenger, on_delete=models.CASCADE)
+    seat_number = models.ManyToManyField(Seat)  
+    booking_date = models.DateTimeField(auto_now_add=True)
+    cancellation_deadline = models.DateTimeField(null=True, blank=True)
+    is_cancelled = models.BooleanField(default=False)
+
+    def clean(self):
+        super().clean()
+        for seat in self.seats.all():
+            # Check for existing reservations for the same seat that are not canceled
+            if Reservation.objects.filter(flight=self.flight, seats=seat, is_cancelled=False).exists():
+                raise ValidationError(f'Seat number {seat.number} already exists for this flight.')
+
+    def save(self, *args, **kwargs):
+        if not self.cancellation_deadline:
+            self.cancellation_deadline = self.flight.departure_time - timedelta(hours=24)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Reservation for {self.passenger} on {self.flight}"
+
+
+        @admin.register(Reservation)
+        class ReservationAdmin(admin.ModelAdmin):
+            list_display = ('passenger', 'flight', 'seat_number', 'booking_date', 'is_cancelled')
+            list_filter = ('is_cancelled',)
+            search_fields = ('passenger__first_name', 'flight__flight_number', 'seat_number')
+            ordering = ('-booking_date',)
+
+
+
+            messages.success(
+                request,
+                f"Booking for Flight {reservation.flight.flight_number} has been successfully canceled."
+            )
 
 
 
 
 
-<!-- flight_detail.html -->
-{% extends 'base.html' %}
 
-{% block content %}
-<div class="flight-info">
-    <h2>Flight: {{ flight.airline_name }} - {{ flight.flight_number }}</h2>
-    <p>Departure: {{ flight.departure_city }} | Arrival: {{ flight.arrival_city }}</p>
-    <p>Departure Time: {{ flight.departure_time|date:"d M Y, H:i" }}</p>
-    <p>Price: ${{ flight.price }}</p>
-</div>
+            def book_ticket(request, flight_id):
+            flight = get_object_or_404(Flight, id=flight_id)
+            if request.method == 'POST':
+                first_name = request.POST['first_name']
+                last_name = request.POST['last_name']
+                email = request.POST['email']
+                phone_number = request.POST['phone_number']
+                selected_seats = request.POST.getlist('seat_numbers')
+        
+                if len(phone_number) != 10 or not phone_number.isdigit():
+                    messages.error(request, "Please enter a valid 10-digit phone number.")
+                    return redirect('airlineapp:book_ticket', flight_id=flight.id)
+        
+                existing_passenger = Passenger.objects.filter(email=email).first()
+                if existing_passenger:
+                    if existing_passenger.first_name == first_name and existing_passenger.last_name == last_name:
+                        messages.error(request, "This email is already registered with your name.")
+                        return redirect('airlineapp:book_ticket', flight_id=flight.id) 
+                    passenger = existing_passenger 
+                else:
+                    passenger = Passenger.objects.create(
+                        first_name=first_name,
+                        last_name=last_name,
+                        email=email,
+                        phone_number=phone_number
+                    )
+        
+                # Check availability of all selected seats
+                unavailable_seats = []
+                reservation_instances = []
+                for seat_number in selected_seats:
+                    seat = Seat.objects.filter(flight=flight, seat_number=seat_number, is_available=True).first()
+                    if not seat:
+                        unavailable_seats.append(seat_number)
+                if unavailable_seats:
+                    messages.error(request, f"The following seats are already booked: {', '.join(unavailable_seats)}")
+                else:
+                    for seat_number in selected_seats:
+                        seat = Seat.objects.get(flight=flight, seat_number=seat_number)
+                        seat.is_available = False
+                        seat.save()
+        
+                        reservation=Reservation.objects.create(
+                            flight=flight,
+                            passenger=passenger,  
+                            seat_number=seat_number
+                        )
+                        reservation_instances.append(reservation)
+                    return redirect('airlineapp:print_ticket', reservation_id=reservation_instances[0].id)
+            available_seats = Seat.objects.filter(flight=flight, is_available=True)
+            return render(request, 'book_ticket.html', {'flight': flight, 'available_seats': available_seats})
 
-<div class="seat-grid">
-    {% for seat in seats %}
-        <div class="seat {% if seat.is_available %}available{% else %}booked{% endif %}" 
-             data-seat-number="{{ seat.seat_number }}">
-            {{ seat.seat_number }}
-        </div>
-    {% endfor %}
-</div>
 
-<div class="seat-status">
-    <p>Available: <span class="available">[G]</span> | Booked: <span class="booked">[B]</span> | Unavailable: <span class="unavailable">[R]</span></p>
-</div>
 
-<div id="info-panel">
-    <h3>Selected Seats:</h3>
-    <ul id="selected-seats"></ul>
-    <p>Total Price: $<span id="total-price">0.00</span></p>
-    <button class="btn btn-success">Proceed to Payment</button>
-</div>
 
-<style>
-    .seat-grid {
-        display: grid;
-        grid-template-columns: repeat(6, 1fr);
-        gap: 10px;
-        margin: 20px 0;
-    }
-    .seat {
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 5px;
-        font-weight: bold;
-        color: #fff;
-        cursor: pointer;
-    }
-    .available {
-        background-color: #4CAF50; /* Green for available seats */
-    }
-    .booked {
-        background-color: #D32F2F; /* Red for booked seats */
-        cursor: not-allowed;
-        text-decoration: line-through;
-    }
-    .selected {
-        background-color: #FFC107; /* Yellow for selected seats */
-    }
-    #info-panel {
-        margin-top: 20px;
-        padding: 10px;
-        border: 1px solid #ccc;
-    }
-</style>
 
-<script>
-    const seats = document.querySelectorAll('.seat');
-    const selectedSeats = document.getElementById('selected-seats');
-    const totalPriceElement = document.getElementById('total-price');
-    const pricePerSeat = parseFloat("{{ flight.price|floatformat:2 }}");
 
-    seats.forEach(seat => {
-        seat.addEventListener('click', function() {
-            if (seat.classList.contains('available')) {
-                seat.classList.toggle('selected'); // Toggle seat selection
-                updateSelectedSeats();
-            }
-        });
-    });
+            from django.shortcuts import redirect, get_object_or_404
+from django.contrib import messages
 
-    function updateSelectedSeats() {
-        selectedSeats.innerHTML = ''; // Clear the list
-        let total = 0;
-        seats.forEach(seat => {
-            if (seat.classList.contains('selected')) {
-                const seatNumber = seat.getAttribute('data-seat-number');
-                selectedSeats.innerHTML += `<li>${seatNumber}</li>`;
-                total += pricePerSeat;
-            }
-        });
-        totalPriceElement.innerText = total.toFixed(2); // Update total price
-    }
-</script>
+def cancel_booking(request, reservation_id):
+    reservation = get_object_or_404(Reservation, id=reservation_id, passenger__user=request.user)
 
-{% endblock %}
+    if reservation.cancellation_deadline < timezone.now():
+        messages.error(request, "The cancellation deadline has passed.")
 
+    else:
+        reservation.cancel()  # Call the custom cancel method to cancel all seats
+        messages.success(request, "Your reservation and all selected seats have been successfully canceled.")
+
+    # Update seat availability
+    Seat.objects.filter(flight=reservation.flight, seat_number=reservation.seat_number).update(is_available=True)
+
+
+    return redirect('airlineapp:print_ticket', reservation_id=reservation.id)

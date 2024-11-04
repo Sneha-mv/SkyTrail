@@ -1,17 +1,64 @@
 {% extends 'base.html' %}
-{% block content %}
-<h2>Ticket Confirmation</h2>
-
-<div class="ticket-details">
-    <p><strong>Passenger Name:</strong> {{ reservation.passenger.first_name }} {{ reservation.passenger.last_name }}</p>
-    <p><strong>Email:</strong> {{ reservation.passenger.email }}</p>
-    <p><strong>Phone Number:</strong> {{ reservation.passenger.phone_number }}</p>
-    <p><strong>Flight:</strong> {{ reservation.flight.airline_name }} - Flight {{ reservation.flight.flight_number }}</p>
-    <p><strong>Departure:</strong> {{ reservation.flight.departure_city }} at {{ reservation.flight.departure_time|date:"d M Y, H:i" }}</p>
-    <p><strong>Arrival:</strong> {{ reservation.flight.arrival_city }}</p>
-    <p><strong>Seat Number:</strong> {{ reservation.seat_number }}</p>
-</div>
-
-<a href="{% url 'airlineapp:index' %}" class="btn btn-success">Back to Home</a>
-<a href="{% url 'airlineapp:cancel_ticket' reservation.id %}" class="btn btn-danger">Cancel Ticket</a>
+{% load static %}
+{% block title %}
+    Booking Confirmation
 {% endblock %}
+{% block content %}
+<div class="container mt-4" style="height: 620px;">
+    {% if messages %}
+      <div class="alert alert-success">
+          {% for message in messages %}
+              {{ message }}
+          {% endfor %}
+      </div>
+    {% endif %}
+    <div class="card" style="margin-top: 40px;">
+        <div class="card-header text-center">
+            <h2 class="my_title">Booking Confirmation</h2>
+        </div>
+        <div class="card-body">
+            <p class="print-sec1">Thank you, <strong>{{ passenger.first_name }} {{ passenger.last_name }}</strong> for choosing us!</p>
+            <p class="print-sec1" style="margin-left: 415px;">Here are your booking details</p>
+            
+            <div class="print-sec2 row">
+                <div class="col-md-6">
+                    <p><strong>Name : </strong> {{ passenger.first_name }} {{ passenger.last_name }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Email : </strong> {{ passenger.email }} </p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Phone Number : </strong> {{ passenger.phone_number }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Flight : </strong> {{ flight.airline_name }} - {{ flight.flight_number }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>From : </strong> {{ flight.departure_city }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>To : </strong> {{ flight.arrival_city }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Departure Time : </strong> {{ flight.departure_time }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Arrival Time : </strong> {{ flight.arrival_time }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Seat Numbers : </strong> {{ seat_numbers|join:", " }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Total Price : </strong> $ {{ total_price }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer text-center">
+            <a href="{% url 'airlineapp:cancel_booking' reservation.id %}" class="btn print-sec3">Cancel Booking</a>
+            <a href="{% url 'airlineapp:index' %}" class="btn print-sec3" style="margin-left: 100px;">Go Back to Home</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

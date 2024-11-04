@@ -62,17 +62,25 @@ class PassengerAdmin(admin.ModelAdmin):
     ordering = ('last_name',)
 
 
-@admin.register(Reservation)
-class ReservationAdmin(admin.ModelAdmin):
-    list_display = ('flight', 'passenger', 'seat_number', 'booking_date')
-    list_filter = ('flight', 'booking_date')
-    search_fields = ('flight__flight_number', 'passenger__first_name', 'passenger__last_name')
-    ordering = ('-booking_date',)
-
-
 @admin.register(Seat)
 class SeatAdmin(admin.ModelAdmin):
     list_display = ('flight', 'seat_number', 'is_available')
     list_filter = ('flight', 'is_available')
     search_fields = ('flight__flight_number', 'seat_number')
     ordering = ('flight', 'seat_number')
+
+
+@admin.register(Reservation)
+class ReservationAdmin(admin.ModelAdmin):
+    list_display = ('passenger', 'flight', 'display_seat_numbers', 'booking_date', 'is_cancelled')
+    list_filter = ('is_cancelled',)
+    search_fields = ('passenger__first_name', 'flight__flight_number')
+    ordering = ('-booking_date',)
+
+    def display_seat_numbers(self, obj):
+        """Display all seat numbers associated with the reservation as a comma-separated list."""
+        return ", ".join(seat.seat_number for seat in obj.seat_number.all())
+    
+    display_seat_numbers.short_description = "Seat Numbers"
+
+

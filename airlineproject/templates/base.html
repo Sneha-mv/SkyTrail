@@ -38,10 +38,11 @@
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="homeDropdown">
                                 {% if request.user.is_authenticated %}
-                                    <li><a class="dropdown-item" href="{% url 'airlineapp:login' %}">Login</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'airlineapp:register' %}">Register</a></li>
                                     <li><a class="dropdown-item" href="{% url 'airlineapp:logout' %}">Logout</a></li>
                                     <li><a class="dropdown-item" href="{% url 'airlineapp:change_password' %}">Change Password</a></li>
+                                    {% if request.session.reservation_id %}
+                                        <li><a class="dropdown-item" href="{% url 'airlineapp:print_ticket' reservation_id=request.session.reservation_id %}">Print Ticket</a></li>
+                                    {% endif %}
                                 {% else %}
                                     <li><a class="dropdown-item" href="{% url 'airlineapp:login' %}">Login</a></li>
                                     <li><a class="dropdown-item" href="{% url 'airlineapp:register' %}">Register</a></li>

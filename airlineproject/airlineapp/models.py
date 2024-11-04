@@ -1,5 +1,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.utils import timezone
+from datetime import timedelta
 
 # Create your models here.
 class Flight(models.Model):
@@ -22,12 +24,13 @@ class Seat(models.Model):
     is_available = models.BooleanField(default=True)
 
     def clean(self):
-        # Check for seat number uniqueness for the flight
-        if Reservation.objects.filter(flight=self.flight, seat_number=self.seat_number).exists():
+        if not self.is_available and Reservation.objects.filter(flight=self.flight, seat_number=self.seat_number).exists():
             raise ValidationError(f'Seat number {self.seat_number} already exists for this flight.')
 
     def save(self, *args, **kwargs):
-        self.clean()  # Call clean to ensure validation
+        # Only call clean on booking, not during cancellation
+        if not self.is_available:
+            self.clean()
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -43,15 +46,29 @@ class Passenger(models.Model):
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
+
 class Reservation(models.Model):
     flight = models.ForeignKey(Flight, on_delete=models.CASCADE)
     passenger = models.ForeignKey(Passenger, on_delete=models.CASCADE)
-    seat_number = models.CharField(max_length=5)
+    seat_number = models.ManyToManyField(Seat)  
     booking_date = models.DateTimeField(auto_now_add=True)
+    cancellation_deadline = models.DateTimeField(null=True, blank=True)
+    is_cancelled = models.BooleanField(default=False)
+
+    def clean(self):
+        super().clean()
+        for seat in self.seat_number.all():
+            # Check for existing reservations for the same seat that are not canceled
+            if Reservation.objects.filter(flight=self.flight, seat_number=seat, is_cancelled=False).exists():
+                raise ValidationError(f'Seat number {seat.seat_number} already exists for this flight.')
+
+    def save(self, *args, **kwargs):
+        if not self.cancellation_deadline:
+            self.cancellation_deadline = self.flight.departure_time - timedelta(hours=24)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"Reservation for {self.passenger} on {self.flight}"
 
-
+   
     
-
