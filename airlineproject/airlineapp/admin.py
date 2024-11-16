@@ -9,7 +9,7 @@ class CustomUserAdmin(UserAdmin):
 
     def password_display(self, obj):
         return '********'
-    password_display.short_description = 'Password'
+    password_display.short_description = 'Password'  
 
     def get_urls(self):
         urls = super().get_urls()
